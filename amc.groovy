@@ -3,7 +3,7 @@
 
 // log input parameters
 log.fine("Run script [$_args.script] at [$now]")
-_def.each{ n, v -> log.finest('Parameter: ' + [n, n =~ /plex|kodi|pushover|pushbullet|mail|myepisodes/ ? '*****' : v].join(' = ')) }
+_def.each{ n, v -> log.finest('Parameter: ' + [n, n =~ /plex|kodi|sonarr|radarr|pushover|pushbullet|mail|myepisodes/ ? '*****' : v].join(' = ')) }
 args.withIndex().each{ f, i -> if (f.exists()) { log.finest "Argument[$i]: $f" } else { log.warning "Argument[$i]: File does not exist: $f" } }
 
 
@@ -27,6 +27,7 @@ exec      = tryQuietly{ exec.toString() }
 kodi = tryQuietly{ any{kodi}{xbmc}.split(/[ ,;|]+/)*.split(/:(?=\d+$)/).collect{ it.length >= 2 ? [host: it[0], port: it[1] as int] : [host: it[0]] } }
 plex = tryQuietly{ plex.split(/[ ,;|]+/)*.split(/:/).collect{ it.length >= 2 ? [host: it[0], token: it[1]] : [host: it[0]] } }
 emby = tryQuietly{ emby.split(/[ ,;|]+/)*.split(/:/).collect{ it.length >= 2 ? [host: it[0], token: it[1]] : [host: it[0]] } }
+sonarr = tryQuietly{ sonarr.split(/[ ,;|]+/)*.split(/:/).collect{ it.length >= 2 ? [host: it[0], port: it[1] as int, apikey: it[2]] : [host: it[0]] } }
 
 // extra options, myepisodes updates and email notifications
 extractFolder      = tryQuietly{ extractFolder as File }
@@ -80,7 +81,7 @@ def forceIgnore(f) {
 
 
 // include artwork/nfo, pushover/pushbullet and ant utilities as required
-if (artwork || kodi || plex || emby) { include('lib/htpc') }
+if (artwork || kodi || plex || sonarr || radarr || emby) { include('lib/htpc') }
 if (pushover || pushbullet ) { include('lib/web') }
 if (gmail || mail) { include('lib/ant') }
 
@@ -553,6 +554,16 @@ if (getRenameLog().size() > 0) {
 			log.fine "Notify Plex: $instance"
 			tryLogCatch {
 				refreshPlexLibrary(instance.host, 32400, instance.token)
+			}
+		}
+	}
+	
+	// make Sonar scan for new content
+	if (sonarr) {
+		sonarr.each{ instance ->
+			log.fine "Notify Sonarr: $instance"
+			tryLogCatch {
+				refreshSonarrLibrary(instance.host, instance.port, instance.apikey)
 			}
 		}
 	}
