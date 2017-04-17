@@ -563,7 +563,7 @@ if (getRenameLog().size() > 0) {
 		sonarr.each{ instance ->
 			log.fine "Notify Sonarr: $instance"
 			tryLogCatch {
-				refreshSonarrLibrary(instance.host, instance.port, instance.apikey)
+				rescanSonarrSeries(instance.host, instance.port, instance.apikey)
 			}
 		}
 	}
